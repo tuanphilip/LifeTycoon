@@ -1,0 +1,51 @@
+name: lifetycoon
+description: "LifeTycoon (Đô Thị Khởi Nghiệp Thực Tế) — Offline-first Mobile Tycoon Simulator combining Gamified Productivity with Business & Market Simulation."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # State Management & Architecture
+  flutter_bloc: ^8.1.5
+  equatable: ^2.0.5
+  get_it: ^7.7.0
+  uuid: ^4.4.0
+  intl: ^0.19.0
+  
+  # Local Storage & Security
+  drift: ^2.18.0
+  sqlite3_flutter_libs: ^0.5.24
+  path_provider: ^2.1.3
+  path: ^1.9.0
+  flutter_secure_storage: ^9.0.0
+  shared_preferences: ^2.2.3
+
+  # UI & Visualization
+  fl_chart: ^0.68.0
+  google_fonts: ^6.2.1
+  flutter_animate: ^4.5.0
+  lucide_icons: ^0.257.0
+
+  # Hardware, Sensors & Utilities
+  sensors_plus: ^5.0.1
+  pedometer: ^4.0.1
+  file_picker: ^8.0.3
+  flutter_local_notifications: ^17.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  drift_dev: ^2.18.0
+  build_runner: ^2.4.9
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/icons/
