@@ -1,4 +1,4 @@
-// LifeTycoon Game Core Engine & State Management
+// LifeTycoon Game Core Engine & State Management (Updated: Flexible Reading Tracking)
 
 let player = {
   name: "Philip Tuan",
@@ -9,6 +9,8 @@ let player = {
   dis: 18,
   pre: 12,
   readingMinutes: 0,
+  readingActive: false,
+  readingInterval: null,
   steps: 3450,
   pomoActive: false,
   pomoSeconds: 25 * 60,
@@ -105,7 +107,8 @@ function renderBusinesses() {
 
   businesses.forEach((biz, idx) => {
     if (biz.level > 0) {
-      const netSec = (biz.baseRevPerSec * biz.level) - biz.baseCostPerSec;
+      const speedMultiplier = 1.0 + (0.01 * player.sta);
+      const netSec = (biz.baseRevPerSec * biz.level * speedMultiplier) - biz.baseCostPerSec;
       totalRevPerHour += (netSec * 3600);
     }
 
@@ -125,7 +128,7 @@ function renderBusinesses() {
 
       ${isUnlocked ? `
         <div class="flex justify-between items-center text-xs mb-3 text-gray-400">
-          <span class="text-moneyGreen font-medium">Doanh thu: +$${Math.floor(biz.baseRevPerSec * biz.level * 3600).toLocaleString()}/h</span>
+          <span class="text-moneyGreen font-medium">Doanh thu: +$${Math.floor(biz.baseRevPerSec * biz.level * (1 + 0.01 * player.sta) * 3600).toLocaleString()}/h</span>
           <span class="text-dangerRed font-medium">Bảo trì: -$${Math.floor(biz.baseCostPerSec * 3600).toLocaleString()}/h</span>
         </div>
         <div class="grid grid-cols-2 gap-2">
@@ -155,7 +158,8 @@ function renderBusinesses() {
 function gameLoopTick() {
   businesses.forEach(biz => {
     if (biz.level > 0) {
-      const netIncome = (biz.baseRevPerSec * biz.level) - biz.baseCostPerSec;
+      const speedMultiplier = 1.0 + (0.01 * player.sta);
+      const netIncome = (biz.baseRevPerSec * biz.level * speedMultiplier) - biz.baseCostPerSec;
       biz.unclaimed += Math.max(0, netIncome);
     }
   });
@@ -192,12 +196,51 @@ function unlockBiz(idx) {
   }
 }
 
-// Action Hub
+// Action Hub - E-Reader (Đo thời gian đọc đơn giản & quy đổi Xu)
+function toggleReadingSession() {
+  const btn = document.querySelector("#tab-action button[onclick='simulateReading()']");
+  if (!player.readingActive) {
+    player.readingActive = true;
+    player.readingSeconds = 0;
+    btn.innerText = "Dừng Đọc & Quy Đổi Thưởng (Đang Đọc...)";
+    btn.className = "w-full mt-2 bg-dangerRed text-white font-bold py-2 rounded-lg text-sm transition active:scale-95";
+    
+    player.readingInterval = setInterval(() => {
+      player.readingSeconds += 1;
+      const mins = Math.floor(player.readingSeconds / 60);
+      const secs = player.readingSeconds % 60;
+      document.getElementById("reading-time-display").innerText = `${mins}m ${secs}s`;
+    }, 1000);
+  } else {
+    clearInterval(player.readingInterval);
+    player.readingActive = false;
+    const earnedMins = Math.max(1, Math.floor(player.readingSeconds / 60));
+    const rewardCash = earnedMins * 100; // $100 per minute
+    const rewardInt = Math.max(1, Math.floor(earnedMins / 5)); // +1 INT per 5 mins
+    
+    player.cash += rewardCash;
+    player.int += rewardInt;
+    player.readingMinutes += earnedMins;
+    
+    alert(`🎉 Bạn đã đọc sách ${earnedMins} phút! Quy đổi thành công +$${rewardCash.toLocaleString()} Xu & +${rewardInt} Trí Tuệ (INT)!`);
+    
+    document.getElementById("reading-time-display").innerText = `${player.readingMinutes} phút`;
+    btn.innerText = "Mở Sách Đọc (EPUB / PDF)";
+    btn.className = "w-full mt-2 bg-surfaceCard border border-borderDark hover:border-techBlue text-white font-medium py-2 rounded-lg text-sm transition active:scale-95";
+    
+    renderTopStatus();
+    renderBusinesses();
+  }
+}
+
+// Map simulateReading to toggleReadingSession
+window.simulateReading = toggleReadingSession;
+
 function togglePomodoro() {
   const btn = document.getElementById("btn-start-pomo");
   if (!player.pomoActive) {
     player.pomoActive = true;
-    btn.innerText = "Dừng Phiên (Face-down Lock Active)";
+    btn.innerText = "Dừng Phiên Tập Trung";
     btn.className = "w-full mt-2 bg-dangerRed text-white font-bold py-2.5 rounded-lg text-sm transition active:scale-95";
     player.pomoInterval = setInterval(() => {
       if (player.pomoSeconds > 0) {
@@ -225,15 +268,6 @@ function togglePomodoro() {
     btn.innerText = "Bắt đầu Phiên Tập Trung (25 Phút)";
     btn.className = "w-full mt-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-black font-bold py-2.5 rounded-lg text-sm transition active:scale-95";
   }
-}
-
-function simulateReading() {
-  player.readingMinutes += 10;
-  player.cash += 500;
-  player.int += 2;
-  document.getElementById("reading-time-display").innerText = `${player.readingMinutes} phút`;
-  renderTopStatus();
-  renderBusinesses();
 }
 
 function addSimulatedSteps() {
